@@ -1,0 +1,52 @@
+
+<?php if (count($searchTabs) > 0): ?>
+  <ul class="nav nav-tabs">
+
+  <?php //IF THE EDS API IS DOWN, VUFIND NOT REALIZE THE
+      //SELECTED TAB SHOULD BE ARTICLES.  CORRECT HERE:
+     $currentUrl = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+	   $betaMessage = "";
+       if (strpos($currentUrl, '/EDS/') !== false) {
+          $searchTabs[1]["selected"] = true;
+          //$searchTabs[0]["url"] = "http://$_SERVER[HTTP_HOST]";
+          //$searchTabs[0]["url"] = "/"; //todo ? 7-2020
+          $searchTabs[0]["selected"] = false;
+		      $betaMessage = "<i class='fa fa-exclamation-triangle' aria-hidden='true'></i> &nbsp<span id='beta'>This semester we are testing article search. Let us know what you think using the Feedback link above.</span><br>";
+        }
+
+   ?>
+
+<?php //TODO - REMOVE '/vufind/ from link below on server ?>
+   
+
+<link href="https://fonts.googleapis.com/css?family=Cabin" rel="stylesheet">
+   <?php
+   //ADD ALPHABROWSE TO SEARCH TABS
+   $advanced=array("id"=>"AlphaBrowse","class"=>"na","label"=>"Catalog AlphaBrowse","permission"=>NULL,"selected"=>false,"url"=>"/Alphabrowse/Home");
+   array_push($searchTabs,$advanced);
+   $currentUrl = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+   if (strpos($currentUrl, 'Alphabrowse/Home') !== false) {
+     $searchTabs[0]["selected"] = false;
+     $searchTabs[2]["selected"] = true;
+     $searchTabs[0]["url"] = "/"; //todo
+   }
+
+    ?>
+    <?php foreach ($searchTabs as $tab): ?>
+        <?php if ($this->permission()->allowDisplay($tab['permission'])): ?>
+          <li<?=$tab['selected'] ? ' class="active"' : ''?>>
+            <a id="<?=$this->transEsc($tab['label']); ?>" <?=$tab['selected'] ? '' : 'href="' . $this->escapeHtmlAttr($tab['url']) . '"' ?>><?=$this->transEsc($tab['label']); ?>
+                <?php //MS CUSTOM - ARTICLE COUNT ON TAB ?>
+                <?php if (isset($tab['url']) && strpos($tab['url'], 'EDS') !== false) {
+                        echo "<span id='articleCount'></span>";
+                }
+                ?>
+          </a>
+          </li>
+        <?php elseif ($block = $this->permission()->getAlternateContent($tab['permission'])): ?>
+            <?=$block?>
+        <?php endif; ?>
+    <?php endforeach; ?>
+  </ul>
+<?php endif; ?>
+<br>

@@ -1,0 +1,37 @@
+<?php
+    // Set page title.
+    $this->headTitle($this->translate('Content Feedback') . ': ' . $this->driver->getBreadcrumb());
+
+    $account = $this->auth()->getManager();
+    $user = $account->isLoggedIn();
+?>
+
+<?php $url = $_SERVER["HTTP_REFERER"]; ?>
+<h2 style="padding-left: 15px"><?=$this->transEsc("Request Print on Demand")?></h2>
+<?=$this->flashmessages() ?>
+<div class="form-group">
+<h3>Please include your email address below</h3>
+      Your request will be sent to the Lehigh Libraries Acquisition Department.
+</div>
+<br><br>
+</div>
+
+
+<form class="form-horizontal" name="printOnDemand" method="post" action="<?=$this->recordLink()->getActionUrl($this->driver, 'PrintOnDemand')?>">
+  <input type="hidden" id="formSuccess" value="<?=$this->transEsc("Form Submitted!")?>"/>
+  <input type="hidden" id="feedbackSuccess" value="<?=$this->transEsc("Thank you for your feedback.")?>"/>
+  <input type="hidden" id="feedbackFailure" value="<?=$this->transEsc("An error has occurred")?>"/>
+
+  
+  <div class="form-group">
+    <div class="col-sm-9" style="padding-left: 25px">
+      <textarea id="comments" name="comments" class="form-control"></textarea>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-9 col-sm-offset-3">
+      <input type="submit" class="btn btn-primary" value="<?=$this->transEsc("Send")?>" />
+      <button type="button" class="btn btn-primary" data-dismiss="modal" aria-hidden="true">Cancel</button>
+    </div>
+  </div>
+</form>

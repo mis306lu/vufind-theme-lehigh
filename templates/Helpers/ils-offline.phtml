@@ -1,0 +1,9 @@
+<br>
+<div class="alert alert-warning">
+  <h2><?=$this->transEsc('ils_offline_title')?></h2>
+   <h3>Sunday Feb. 14, 2021 from 6:00AM to 9:00AM</h3>
+  <p><strong><?=$this->transEsc('ils_offline_status')?></strong></p>
+  <p><?=$this->transEsc($this->offlineModeMsg)?></p>
+  <?php $supportEmail = $this->escapeHtmlAttr($this->systemEmail()); ?>
+  <p><a href="mailto:<?=$supportEmail?>"><?=$supportEmail?></a></p>
+</div>

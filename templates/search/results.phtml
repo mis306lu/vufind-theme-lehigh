@@ -1,0 +1,181 @@
+<?php
+  // Set up page title:
+  $lookfor = $this->results->getUrlQuery()->isQuerySuppressed() ? '' : $this->params->getDisplayQuery();
+  if (isset($this->overrideTitle)) {
+      $this->headTitle($this->overrideTitle);
+  } else {
+      $this->headTitle($this->translate('Search Results') . (empty($lookfor) ? '' : " - {$lookfor}"));
+  }
+  
+
+  //TEMP REMOVED 3-18 - CORONA
+    $this->overrideEmptyMessage ="<br><div class='alert alert-danger'>    
+                                  <p>If Lehigh doesn't own the material you need, you can simultaneously search several academic library catalogs in Pennsylvania through PALCI. You can then request many of the items found there directly from the owning libraries.</p>
+                                <br>
+                                <p><a href='https://library.lehigh.edu/content/e_zborrow_authentication' target='new'>To login to the PALCI system, simply click here </a>and then enter your Lehigh user name and password.</p>
+
+                                 <br>
+                                 <p><b>Please note: </b>The PALCI system currently handles requests <b>only for books</b>. If you need a photocopy of an article, <a href='https://illiad.lib.lehigh.edu/illiad/illiad.dll/OpenURL?'' target='new'>please request it through the ILL Document Delivery Request form.</a></p>
+                               </div>";
+
+
+//IF THIS WAS AN ARTICLE SEARCH -- USE A DIFFERENT 'NOT FOUND' MESSAGE:
+$currentUrl = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+$currentSearch = $this->escapeHtml($lookfor);
+if (strpos($currentUrl, 'EDS') !== false) {
+     $this->overrideEmptyMessage ="<br><div class='alert alert-danger'>    
+                                  <h2>Here are some options to help you with your research:</h2>
+                                  
+                                  <p><h3>If you think you are seeing this message in error please  <a href='http://localhost/vufind/Feedback/Home' target='_feedback'>send us a message</a></h3></p>
+
+                                
+                                <p><h4>Try your search using <a href='https://scholar.google.com/scholar?hl=en&as_sdt=0%2C39&q=$currentSearch' target='_google'>Google Scholar</a></h4></p>
+
+                                 
+                                 <p><h4>If you are searching for a specific article you can request it through <a href='https://illiad.lib.lehigh.edu/illiad/logon.html' target='_ill'>Interlibrary Loan</a></h4></p>
+
+
+                                 
+                                 <p><h4>Get research help from a <a href='https://library.lehigh.edu/about/library-staff' target='new'>Lehigh librarian</a></h4></p>
+
+
+                               </div>";
+   }
+
+
+  // Set up search box:
+  $this->layout()->searchbox = $this->context($this)->renderInContext(
+      'search/searchbox.phtml',
+      [
+        'lookfor' => $lookfor,
+        'searchIndex' => $this->params->getSearchHandler(),
+        'searchType' => $this->params->getSearchType(),
+        'searchId' => $this->results->getSearchId(),
+        'searchClassId' => $this->params->getSearchClassId(),
+        'checkboxFilters' => $this->params->getCheckboxFacets(),
+        'filterList' => $this->params->getFilterList(true),
+        'hasDefaultsApplied' => $this->params->hasDefaultsApplied(),
+        'selectedShards' => $this->params->getSelectedShards(),
+        'ignoreHiddenFiltersInRequest' => isset($this->ignoreHiddenFiltersInRequest) ? $this->ignoreHiddenFiltersInRequest : false,
+        'ignoreHiddenFilterMemory' => isset($this->ignoreHiddenFilterMemory) ? $this->ignoreHiddenFilterMemory : false,
+      ]
+  );
+
+  // Set up breadcrumbs:
+  if (isset($this->overrideTitle)) {
+    $this->layout()->breadcrumbs .= '<li class="active">' . $this->escapeHtml($this->overrideTitle) . '</li>';
+  } else {
+    $this->layout()->breadcrumbs .= '<li class="active">' . $this->transEsc('Search') . ': ' . $this->escapeHtml($lookfor) . '</li>';
+  }
+
+  // Enable cart if appropriate:
+  $this->showBulkOptions = $this->params->getOptions()->supportsCart() && $this->showBulkOptions;
+  // Checkboxes if appropriate:
+  $this->showCartControls = $this->params->getOptions()->supportsCart() && $this->cart()->isActive()
+    && ($this->showBulkOptions || !$this->cart()->isActiveInSearch());
+  // Enable bulk options if appropriate:
+  $this->showCheckboxes = $this->showCartControls || $this->showBulkOptions;
+
+  // Load Javascript only if list view parameter is NOT full:
+  if ($this->params->getOptions()->getListViewOption() != "full") {
+    $this->headScript()->appendFile("record.js");
+    $this->headScript()->appendFile("embedded_record.js");
+  }
+
+  // Load Javascript dependencies into header:
+  $this->headScript()->appendFile("vendor/hunt.min.js");
+  $this->headScript()->appendFile("check_item_statuses.js");
+  $this->headScript()->appendFile("check_save_statuses.js");
+?>
+
+<div class="<?=$this->layoutClass('mainbody')?>">
+  <?php if (($recordTotal = $this->results->getResultTotal()) > 0): // only display these at very top if we have results ?>
+    <?php foreach ($this->results->getRecommendations('top') as $index => $current): ?>
+      <?=$this->recommend($current, 'top', $index)?>
+    <?php endforeach; ?>
+  <?php endif; ?>
+  <?=$this->flashmessages()?>
+
+ <div id="articleSearchResults" style="display:none"></div>
+
+
+
+  <nav class="search-header hidden-print">
+    <div class="search-stats">
+      <?php if ($recordTotal > 0): ?>
+        <?=$this->context()->renderInContext('search/controls/showing.phtml', ['lookfor' => $lookfor, 'recordTotal' => $recordTotal]) ?>
+        <a class="search-filter-toggle visible-xs" href="#search-sidebar" data-toggle="offcanvas" title="<?=$this->transEsc('sidebar_expand') ?>">
+          <?=$this->transEsc('Refine Results') ?>
+        </a>
+      <?php else: ?>
+        <h2><?=$this->transEsc('nohit_heading')?></h2>
+      <?php endif; ?>
+    </div>
+
+    <?php if ($recordTotal > 0): ?>
+      <div class="search-controls">
+        <?=$this->render('search/controls/limit.phtml')?>
+        <?=$this->render('search/controls/sort.phtml')?>
+        <?=$this->render('search/controls/view.phtml')?>
+      </div>
+    <?php endif; ?>
+  </nav>
+  <?php /* End Listing Options */ ?>
+
+  <?php if ($recordTotal < 1): ?>
+    <p>
+      <?php if (isset($this->overrideEmptyMessage)): ?>
+        <?=$this->overrideEmptyMessage?>
+      <?php else: ?>
+        <?php $this->layout()->srmessage = $this->translate('nohit_lookfor_html', ['%%lookfor%%' => $this->escapeHtml($lookfor)]); ?>
+        <?=$this->layout()->srmessage ?>
+      <?php endif; ?>
+    </p>
+    <?php if (isset($this->parseError)): ?>
+      <p class="alert alert-danger"><?=$this->transEsc('nohit_parse_error')?></p>
+    <?php endif; ?>
+    <?php foreach (($top = $this->results->getRecommendations('top')) as $index => $current): ?>
+      <?=$this->recommend($current, 'top', $index)?>
+    <?php endforeach; ?>
+    <?php foreach ($this->results->getRecommendations('noresults') as $index => $current): ?>
+      <?php if (!in_array($current, $top)): ?>
+        <?=$this->recommend($current, 'noresults', $index)?>
+      <?php endif; ?>
+    <?php endforeach; ?>
+  <?php else: ?>
+    <form id="search-cart-form" method="post" name="bulkActionForm" action="<?=$this->url('cart-searchresultsbulk')?>" data-lightbox data-lightbox-onsubmit="bulkFormHandler">
+      <?=$this->context($this)->renderInContext('search/bulk-action-buttons.phtml', ['idPrefix' => ''])?>
+    </form>
+    <?=$this->render('search/list-' . $this->params->getView() . '.phtml')?>
+    <?=$this->context($this)->renderInContext('search/bulk-action-buttons.phtml', ['idPrefix' => 'bottom_', 'formAttr' => 'search-cart-form'])?>
+    <?=$this->paginationControl($this->results->getPaginator(), 'Sliding', 'search/pagination.phtml', ['results' => $this->results, 'options' => isset($this->paginationOptions) ? $this->paginationOptions : []])?>
+
+    <div class="searchtools hidden-print">
+      <strong><?=$this->transEsc('Search Tools')?>:</strong>
+      <a href="<?=$this->results->getUrlQuery()->setViewParam('rss')?>"><i class="fa fa-bell" aria-hidden="true"></i> <?=$this->transEsc('Get RSS Feed')?></a>
+      &mdash;
+      <a href="<?=$this->url('search-email')?>" class="mailSearch" data-lightbox id="mailSearch<?=$this->escapeHtmlAttr($this->results->getSearchId())?>">
+        <i class="fa fa-envelope" aria-hidden="true"></i> <?=$this->transEsc('Email this Search')?>
+      </a>
+      <?php if ($this->accountCapabilities()->getSavedSearchSetting() === 'enabled'): ?>
+        &mdash;
+        <?php if (is_numeric($this->results->getSearchId())): ?>
+          <?php if ($this->results->isSavedSearch()): ?>
+            <a href="<?=$this->url('myresearch-savesearch')?>?delete=<?=urlencode($this->results->getSearchId())?>"><i class="fa fa-remove" aria-hidden="true"></i> <?=$this->transEsc('save_search_remove')?></a>
+          <?php else: ?>
+            <a href="<?=$this->url('myresearch-savesearch')?>?save=<?=urlencode($this->results->getSearchId())?>"><i class="fa fa-save" aria-hidden="true"></i> <?=$this->transEsc('save_search')?></a>
+          <?php endif; ?>
+        <?php endif; ?>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
+</div>
+<?php /* End Main Listing */ ?>
+
+<?php /* Narrow Search Options */ ?>
+<div class="<?=$this->layoutClass('sidebar')?>" id="search-sidebar">
+  <?php foreach ($this->results->getRecommendations('side') as $index => $current): ?>
+    <?=$this->recommend($current, 'side', $index)?>
+  <?php endforeach; ?>
+</div>
+<?php /* End Narrow Search Options */ ?>

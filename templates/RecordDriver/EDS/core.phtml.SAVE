@@ -1,0 +1,147 @@
+<?php $this->headLink()->appendStylesheet('EDS.css'); ?>
+<?php
+    $items = $this->driver->getItems();
+    $dbLabel = $this->driver->getDbLabel();
+    $thumb = $this->driver->getThumbnail('medium');
+    $pubType = $this->driver->getPubType();
+    $customLinks = $this->driver->getCustomLinks();
+    $accessLevel = $this->driver->getAccessLevel();
+    $restrictedView = empty($accessLevel) ? false : true;
+?>
+
+
+<script>
+
+function recordDocReady() {
+  console.log($("#edsRecordDetails").height());
+  //MAKE THE MODAL LENGTH LONG ENOUGH TO FIT CONTENT & SCROLLABLE
+  rescale();
+  $("#edsRecordDetails").parent().parent().parent().css('overflow-y','scroll');
+  //THE LINKS INSIDE THE MODAL/DETAILS SHOULD OPEN IN A NEW WIDOW
+  //*NOT* IN THE MODAL ITSELF
+  $("#edsRecordDetails").each(function(i) {
+    $(this).find("a").attr("data-lightbox-ignore", "");
+    $(this).find("a").attr("target", "_blank");
+  });
+  
+  var classname = document.getElementsByClassName("trackoutbound");
+    
+  var tracking = function() {
+    var attribute = this.getAttribute("href");
+    //alert(attribute);
+    trackOutboundLink(attribute);
+  };
+
+   for (var i = 0; i < classname.length; i++) {
+      classname[i].addEventListener('click', tracking, false);
+   }
+}
+
+function rescale(){
+    var size = {width: $(window).width() , height: $(window).height() }
+    /*CALCULATE SIZE*/
+    var offset = 70;
+    var offsetBody = 150;
+    console.log($("#edsRecordDetails").parent().parent().parent());
+    $("#edsRecordDetails").parent().parent().parent().css('height', size.height - offset );
+}
+
+</script>
+
+<style>
+  .mainbody {
+    width: 100%
+  }
+</style>
+
+
+
+<div  id="edsRecordDetails"  class="media" vocab="http://schema.org/" resource="#record" typeof="<?=$this->driver->getSchemaOrgFormats()?> Product">
+  <div class="media-left medium img-col">
+    
+
+
+  </div>
+  <div class="media-body info-col">
+    <h3 property="name"><?=$this->driver->getTitle()?></h3>
+
+    <?php if ($this->driver->hasHTMLFullTextAvailable()): ?>
+      &nbsp;&nbsp;<i class="fa fa-external-link"></i>&nbsp;
+        <a href="<?= $this->recordLink()->getUrl($this->driver, 'fulltext') ?>#html" class="html fulltext _record_link trackoutbound" target="_blank">
+          <?=$this->transEsc('HTML Full Text')?>
+        </a>
+        &nbsp; &nbsp;
+    <?php endif; ?>
+
+    <?php if ($this->driver->hasPdfAvailable()): ?>
+        &nbsp;&nbsp;<i class="fa fa-file-pdf-o"></i>&nbsp;
+        <a href="<?= $this->recordLink()->getUrl($this->driver).'/PDF'; ?>" class="pdf fulltext trackoutbound" target="_blank">
+          <?=$this->transEsc('PDF Available')?>
+        </a>
+    <?php endif; ?>
+
+
+    <table class="table table-striped">
+      <caption class="sr-only"><?=$this->transEsc('Bibliographic Details')?></caption>
+      <?php foreach ($items as $key => $item): ?>
+        <?php if (!empty($item['Data'])): ?>
+        <tr>
+          <th><?=$this->transEsc($item['Label'])?>:</th>
+          <td><?=$this->driver->linkUrls($item['Data'])?></td>
+        </tr>
+        <?php endif; ?>
+      <?php endforeach; ?>
+
+      <?php if ($dbLabel): ?>
+        <tr>
+          <th><?=$this->transEsc('Database')?>:</th>
+          <td><?=$this->escapeHtml($dbLabel)?></td>
+        </tr>
+      <?php endif; ?>
+
+      <?php if ($this->driver->hasHTMLFullTextAvailable() && !$restrictedView): ?>
+        <?php $fullText = $this->driver->getHtmlFullText(); ?>
+        <tr id="html">
+          <td colspan="2">
+            <?=$fullText?>
+          </td>
+        </tr>
+      <?php elseif ($this->driver->hasHTMLFullTextAvailable() && $restrictedView): ?>
+        <tr id="html">
+          <td>
+            <?=$this->transEsc('Full text is not displayed to guests')?>
+          </td>
+          <td>
+            <a class="login" href="<?=$this->url('myresearch-home')?>" rel="nofollow">
+              <strong><?=$this->transEsc('Login for full access')?></strong>
+            </a>
+          </td>
+        </tr>
+      <?php endif; ?>
+    </table>
+
+    <div class="resultItemLine4 custom-links">
+
+    <?php $customLinks = array_merge($this->driver->getFTCustomLinks(), $this->driver->getCustomLinks());
+    if (!empty($customLinks)): ?>
+      <?php foreach ($customLinks as $customLink): ?>
+        <?php
+          $url = $customLink['Url'] ?? '';
+          $mot = $customLink['MouseOverText'] ?? '';
+          $icon = $customLink['Icon'] ?? '';
+          $name = $customLink['Text'] ?? '';
+        ?>
+        <span>
+          <a href="<?=$this->escapeHtmlAttr($url)?>" target="_blank" title="<?=$this->escapeHtmlAttr($mot)?>" class="custom-link">
+            <?php if ($icon): ?><img src="<?=$this->escapeHtmlAttr($icon)?>" /> <?php endif; ?><?=$this->escapeHtml($name)?>
+          </a>
+        </span>
+      <?php endforeach; ?>
+    <?php endif; ?>
+
+    <?php $doi = $this->doi($this->driver, 'record'); if ($doi->isActive()): ?>
+        <div><?=$doi->renderTemplate()?></div>
+    <?php endif; ?>
+    </div>
+  </div>
+</div>

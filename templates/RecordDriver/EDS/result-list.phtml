@@ -1,0 +1,187 @@
+<?php
+  $this->headLink()->appendStylesheet('EDS.css');
+  $accessLevel = $this->driver->getAccessLevel();
+  $restrictedView = empty($accessLevel) ? false : true;
+  $coverDetails = $this->record($this->driver)->getCoverDetails('result-list', 'medium', $this->recordLink()->getUrl($this->driver));
+?>
+<?php
+  $thumbnail = false;
+  $thumbnailAlignment = $this->record($this->driver)->getThumbnailAlignment('result');
+  ob_start(); ?>
+  <div class="media-<?=$thumbnailAlignment ?> <?=$this->escapeHtml($coverDetails['size'])?>">
+    <?php if ($coverDetails['cover']): ?>
+      <a href="<?=$this->recordLink()->getUrl($this->driver)?>" class="_record_link">
+        <img src="<?=$this->escapeHtmlAttr($coverDetails['cover'])?>" class="recordcover" alt="<?=$this->transEsc('Cover Image')?>"/>
+      </a>
+    <?php else: ?>
+      <span class="recordcover pt-icon pt-<?=$this->driver->getPubTypeId()?>"></span>
+      <div><?=$this->driver->getPubType()?></div>
+    <?php endif; ?>
+  </div>
+<?php $thumbnail = ob_get_contents(); ?>
+<?php ob_end_clean(); ?>
+<input type="hidden" value="<?=$this->escapeHtmlAttr($this->driver->getUniqueID())?>" class="hiddenId" />
+<input type="hidden" value="<?=$this->escapeHtmlAttr($this->driver->getSourceIdentifier())?>" class="hiddenSource" />
+<div class="media<?=$this->driver->supportsAjaxStatus()?' ajaxItem':''?>">
+  <?php if ($thumbnail && $thumbnailAlignment == 'left'): ?>
+    <?=$thumbnail ?>
+  <?php endif; ?>
+  <div class="media-body">
+    <div class="result-body">
+      <?php $items = $this->driver->getItems();
+        if (isset($items) && !empty($items)):
+          foreach ($items as $item):
+            if (!empty($item)): ?>
+              <div class="resultItemLine1">
+
+                <?php if('Ti' == $item['Group']): ?>
+                  <a data-lightbox  href="<?=$this->recordLink()->getUrl($this->driver)?>" class="title getFull _record_link"  data-view="<?=$this->params->getOptions()->getListViewOption()?>">
+                  <?=$item['Data']?> </a>
+                <?php //MS REMOVING FIELDS FROM DISPLAY //?>
+                <?php elseif('Su' == $item['Group']): ?>
+                <?php elseif('TypPub' == $item['Group']): ?>
+                <?php elseif('PublrInfo' == $item['Group']): ?>
+                <?php elseif('Src' == $item['Group'] && 'NLM Title Abbreviation' == $item['Label']): ?>
+                <?php elseif('Src' == $item['Group'] && 'Other Journal Titles' == $item['Label']): ?>
+                <?php elseif('Access URL' == $item['Label']): ?>
+                <?php elseif('Relation' == $item['Label']): ?>
+                <?php elseif('Availability' == $item['Label']): ?>
+                <?php elseif('Au' == $item['Group']): ?>
+		            <?php //END REMOVING FROM DISPLAY ?>
+		
+		
+                <?php else:?>
+                 
+                    <b><?=$this->transEsc($item['Label'])?>:</b>
+                    <?=$this->driver->linkUrls($item['Data'])?>
+                  
+                <?php endif;?>
+              </div>
+            <?php endif;
+          endforeach;
+
+          //LEHIGH
+          echo $this->driver->getPageCount();
+          echo $this->driver->getPublicationYear();
+          echo "&nbsp;&nbsp;<i class='fa fa-file-text-o'></i>&nbsp;&nbsp;". $this->driver->getPubType();
+
+
+        elseif ($restrictedView): ?>
+          <div class="resultItemLine1">
+            <p>
+              <?=$this->transEsc('This result is not displayed to guests')?>
+              <br />
+              <a class="login" href="<?=$this->url('myresearch-home')?>">
+                <strong><?=$this->transEsc('Login for full access')?></strong>
+              </a>
+            </p>
+          </div>
+        <?php endif; ?>
+
+     
+        <?php $customLinks = array_merge($this->driver->getFTCustomLinks(), $this->driver->getCustomLinks());
+        if (!empty($customLinks) && !$this->driver->hasHTMLFullTextAvailable() && !$this->driver->hasPdfAvailable()): ?>
+         <div class="resultItemLine4 custom-links">
+          <?php foreach ($customLinks as $customLink): ?>
+            <?php
+              $url = $customLink['Url'] ?? '';
+              $mot = $customLink['MouseOverText'] ?? '';
+              $icon = $customLink['Icon'] ?? '';
+              $name = $customLink['Text'] ?? '';
+            ?>
+            <span>
+            <i class="fa fa-external-link"></i>&nbsp;<a href="<?=$this->escapeHtmlAttr($url)?>" target="_blank" title="<?=$this->escapeHtmlAttr($mot)?>" class="custom-link">
+                <?=$this->escapeHtml($name)?>
+              </a>
+            </span>
+          <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+
+
+
+
+
+
+
+
+
+     
+
+      <?php if ($this->driver->hasHTMLFullTextAvailable()): ?>
+        &nbsp;&nbsp;<i class="fa fa-external-link"></i>&nbsp;
+        <a onclick="trackOutboundLink('<?=$this->recordLink()->getTabUrl($this->driver, 'fulltext')?>');"  href="<?= $this->recordLink()->getUrl($this->driver,'fulltext') ?>#html" class="html fulltext _record_link" target="_blank" data-lightbox>
+          <?=$this->transEsc('HTML Full Text')?>
+        </a>
+        &nbsp; &nbsp;
+      <?php endif; ?>
+
+      <?php if ($this->driver->hasPdfAvailable()): ?>
+	       &nbsp;&nbsp;<i class="fa fa-file-pdf-o"></i>&nbsp;
+        <a onclick="trackOutboundLink('<?=$this->recordLink()->getTabUrl($this->driver, 'PDF')?>');" href="<?= $this->recordLink()->getTabUrl($this->driver, 'PDF'); ?>" class="fulltext" target="_blank">
+          <?=$this->transEsc('PDF Available')?>
+        </a>
+      <?php endif; ?>
+
+      <?php /* Links from DOI linker */ ?>
+      <?php $doi = $this->doi($this->driver, 'results'); if ($doi->isActive()):?>
+        <?=$doi->renderTemplate()?>
+      <?php endif; ?>
+
+      <?php //LEHIGH CUSTOM ?>
+        <?php if ($this->driver->hasDoiAvailable()): ?>  
+          <div id='<?= $this->driver->getDoiNumber() ?>' class='eds-browzine-article'></div>
+        <?php endif; ?>
+      <?php //END LEHIGH CUSTOM ?>
+
+
+    </div>
+    <div class="result-links hidden-print">
+      <?php /* Display qrcode if appropriate: */ ?>
+      <?php if ($QRCode = $this->record($this->driver)->getQRCode("results")): ?>
+        <?php
+          // Add JS Variables for QrCode
+          $this->jsTranslations()->addStrings(['qrcode_hide' => 'qrcode_hide', 'qrcode_show' => 'qrcode_show']);
+        ?>
+        <span class="hidden-xs">
+          <i class="fa fa-fw fa-qrcode" aria-hidden="true"></i> <a href="<?=$this->escapeHtmlAttr($QRCode);?>" class="qrcodeLink"><?=$this->transEsc('qrcode_show')?></a>
+          <div class="qrcode hidden">
+            <script type="text/template" class="qrCodeImgTag">
+              <img alt="<?=$this->transEsc('QR Code')?>" src="<?=$this->escapeHtmlAttr($QRCode);?>"/>
+            </script>
+          </div><br/>
+        </span>
+      <?php endif; ?>
+
+      <?php if ($this->cart()->isActiveInSearch() && $this->params->getOptions()->supportsCart() && $this->cart()->isActive()): ?>
+        <?=$this->render('record/cart-buttons.phtml', ['id' => $this->driver->getUniqueId(), 'source' => $this->driver->getSourceIdentifier()]); ?><br/>
+      <?php endif; ?>
+
+      <?php if ($this->userlist()->getMode() !== 'disabled'): ?>
+        <?php /* Add to favorites */ ?>
+        <i class="fa fa-fw fa-star" aria-hidden="true"></i> <a href="<?=$this->recordLink()->getActionUrl($this->driver, 'Save')?>" class="save-record" data-lightbox id="<?=$this->driver->getUniqueId() ?>" title="<?=$this->transEsc('Add to favorites')?>"><?=$this->transEsc('Add to favorites')?></a><br/>
+
+        <?php /* Saved lists */ ?>
+        <div class="savedLists alert alert-info hidden">
+          <strong><?=$this->transEsc("Saved in")?>:</strong>
+        </div>
+      <?php endif; ?>
+
+      <?php /* Hierarchy tree link */ ?>
+      <?php $trees = $this->driver->tryMethod('getHierarchyTrees'); if (!empty($trees)): ?>
+        <?php foreach ($trees as $hierarchyID => $hierarchyTitle): ?>
+          <div class="hierarchyTreeLink">
+            <input type="hidden" value="<?=$this->escapeHtmlAttr($hierarchyID)?>" class="hiddenHierarchyId" />
+            <i class="fa fa-fw fa-sitemap" aria-hidden="true"></i>
+            <a class="hierarchyTreeLinkText" data-lightbox href="<?=$this->recordLink()->getTabUrl($this->driver, 'HierarchyTree', ['hierarchy' => $hierarchyID])?>#tabnav" title="<?=$this->transEsc('hierarchy_tree')?>">
+              <?=$this->transEsc('hierarchy_view_context')?><?php if (count($trees) > 1): ?>: <?=$this->escapeHtml($hierarchyTitle)?><?php endif; ?>
+            </a>
+          </div>
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
+  </div>
+  <?php if ($thumbnail && $thumbnailAlignment == 'right'): ?>
+    <?=$thumbnail ?>
+  <?php endif; ?>
+</div>

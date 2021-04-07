@@ -1,0 +1,53 @@
+<?php
+    // Set page title.
+    $this->headTitle($this->translate('Content Feedback') . ': ' . $this->driver->getBreadcrumb());
+
+    $account = $this->auth()->getManager();
+    $user = $account->isLoggedIn();
+?>
+
+<?php $url = $_SERVER["HTTP_REFERER"]; ?>
+<h2><?=$this->transEsc("Send us your feedback!")?></h2>
+<?=$this->flashmessages() ?>
+<form class="form-horizontal" name="emailRecord" method="post" action="<?=$this->recordLink()->getActionUrl($this->driver, 'ContentFeedback')?>">
+  <input type="hidden" id="formSuccess" value="<?=$this->transEsc("Form Submitted!")?>"/>
+  <input type="hidden" id="feedbackSuccess" value="<?=$this->transEsc("Thank you for your feedback.")?>"/>
+  <input type="hidden" id="feedbackFailure" value="<?=$this->transEsc("An error has occurred")?>"/>
+  <div class="form-group">
+    <label class="col-sm-3 control-label" for="name"><?=$this->transEsc("Record URL")?></label>
+    <div class="col-sm-9">
+    <b><?php echo $_SERVER["HTTP_REFERER"]; ?></b>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label" for="name"><?=$this->transEsc("Your Name")?></label>
+    <div class="col-sm-9">
+      <input type="text" id="name" name="name" class="form-control"/>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label" for="email"><?=$this->transEsc("Email Address")?></label>
+    <div class="col-sm-9">
+      <input type="email" id="email" name="email" class="form-control"/>
+      <input type="hidden" id="asa" name="asa" value="<?= $this->url?>"/>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label" for="title"><?=$this->transEsc("Title")?></label>
+    <div class="col-sm-9">
+      <input type="text" id="title" name="title" class="form-control" value="<?=$this->driver->getBreadcrumb() ?>"/>
+    </div>
+  </div>
+  <input type="hidden" name="asaurl" id="asaurl" value="<?= $url?>">
+  <div class="form-group">
+    <label class="col-sm-3 control-label" for="comments"><?=$this->transEsc("Please describe the problem:")?></label>
+    <div class="col-sm-9">
+      <textarea id="comments" name="comments" class="form-control"></textarea>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-9 col-sm-offset-3">
+      <input type="submit" class="btn btn-primary" value="<?=$this->transEsc("Send")?>" />
+    </div>
+  </div>
+</form>

@@ -1,0 +1,33 @@
+$(document).ready(function() {
+  <?php if (isset($this->searchDetails) && is_object($this->searchDetails)): ?>
+   <?php $groupcounter = 0; ?>
+   <?php $fieldcounter = 0; ?>
+   <?php $searcharray = array() ?>
+    <?php foreach ($this->searchDetails->getQueries() as $searchGroup): ?>
+    
+     <?php $fieldcounter = 0; ?>
+      <?php $i = 0; foreach ($searchGroup->getQueries() as $search): ?>
+        <?php if (++$i == 1): ?>
+          //var new_group = addGroup('<?=addslashes($search->getString())?>', '<?=addslashes($search->getHandler())?>', '<?=$searchGroup->isNegated() ? 'NOT' : $searchGroup->getOperator()?>');
+          <?php array_push($searcharray,$search->getString()); ?>
+        <?php else: ?>
+          //addSearch('<?=addslashes($search->getString())?>', '<?=addslashes($search->getHandler())?>');
+          <?php array_push($searcharray,$search->getString()); ?>
+        <?php endif; ?>
+        <?php $fieldcounter++ ?>
+      <?php endforeach; ?>
+      var new_group = addGroup('<?= implode(",",$searcharray)?>', '<?=addslashes($search->getHandler())?>', '<?=$searchGroup->isNegated() ? 'NOT' : $searchGroup->getOperator()?>');
+      <?php $groupcounter++ ?>
+      <?php $searcharray = array() ?>
+    <?php endforeach; ?>
+  <?php else: ?>
+    var new_group = addGroup();
+    var new_groups = addGroup();
+    var new_groups = addGroup();
+    //addSearch(new_group);
+    //addSearch(new_group);
+    //addSearch(new_group);
+  <?php endif; ?>
+  // show the add group link
+  $("#addGroupLink").removeClass("offscreen");
+});
